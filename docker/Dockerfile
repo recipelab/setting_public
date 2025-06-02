@@ -32,7 +32,7 @@ RUN apt update
 # systemd를 사용하기 위함
 RUN apt install -y init systemd
 RUN apt install -y iproute2 fonts-powerline can-utils
-RUN apt install -y zsh git curl vim tmux
+RUN apt install -y zsh git curl vim tmux htop
 RUN apt install -y python3-catkin-tools python-is-python3
 RUN apt install -y python3-jinja2
 RUN apt install -y xfce4 xfce4-goodies

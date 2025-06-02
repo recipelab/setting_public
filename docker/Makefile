@@ -26,13 +26,14 @@ else
 	exit 1
 endif
 
+PROGRESS_MESSAGE=install & reboot -> clone -> setup -> build -> create -> enable_service & reboot
 confirm:
 	@echo "USER=$(USER), DISTRO=$(DISTRO), ARCH=$(ARCH), CGROUP_VER=$(CGROUP_VER)"
 	@read -p "Is Right?(yes/no/?): " INPUT; \
 	if [ "$$INPUT" = "yes" ] || [ "$$INPUT" = "y" ]; then \
 		:; \
 	elif [ "$$INPUT" = "?" ]; then \
-		echo "install & reboot -> clone -> setup -> build -> create -> enable_service & reboot"; \
+		echo "# progress: $(PROGRESS_MESSAGE)"; \
 		exit 1; \
 	else \
 		exit 1; \
@@ -75,11 +76,13 @@ install: confirm
 	sudo apt update
 	sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 	sudo usermod -aG docker $(USER)
+	@echo "# progress: $(PROGRESS_MESSAGE)"
 
 clone: confirm
 	cd /home/$(USER) \
 	&& git clone https://github.com/recipelab/catkin_ws_actuator.git --recursive \
 	&& ln -s catkin_ws_actuator catkin_ws
+	@echo "# progress: $(PROGRESS_MESSAGE)"
 
 setup: confirm
 	sudo apt update
@@ -87,19 +90,23 @@ setup: confirm
 	cd /home/$(USER)/catkin_ws/src/setting/docker \
 	&& curl -fsSL https://code-server.dev/install.sh | sh \
 	&& mkdir -p ~/.config/code-server && cp config.yaml ~/.config/code-server && sudo systemctl enable --now code-server@$(USER)
+	@echo "# progress: $(PROGRESS_MESSAGE)"
 
 build: confirm
 	$(CGROUPCMD)
 	cd /home/$(USER)/catkin_ws/src/setting/docker \
 	&& docker build -f /home/$(USER)/catkin_ws/src/setting/docker/Dockerfile -t recipelab/ros:noetic /home/$(USER) --progress=plain --no-cache --build-arg docker_from=$(DOCKER_FROM)
+	@echo "# progress: $(PROGRESS_MESSAGE)"
 
 create: confirm
 	docker create --name ros1 --interactive --tty --network=host --privileged --volume=/dev:/dev $(CGROUPNS) --volume=/sys/fs/cgroup:/sys/fs/cgroup:rw recipelab/ros:noetic
+	@echo "# progress: $(PROGRESS_MESSAGE)"
 
 enable_service: confirm
 	sudo ln -sf /home/$(USER)/catkin_ws/src/setting/docker/docker_ros1.service /etc/systemd/system
 	sudo systemctl enable docker_ros1
 	# sudo systemctl [enable|start|restart|stop|status|disable] docker_ros1
+	@echo "# progress: $(PROGRESS_MESSAGE)"
 
 run:
 	docker run --detach --name ros1 --interactive --tty --network=host --privileged --volume=/dev:/dev $(CGROUPNS) --volume=/sys/fs/cgroup:/sys/fs/cgroup:rw recipelab/ros:noetic
