@@ -32,7 +32,7 @@ confirm:
 	if [ "$$INPUT" = "yes" ] || [ "$$INPUT" = "y" ]; then \
 		:; \
 	elif [ "$$INPUT" = "?" ]; then \
-		echo "install & reboot -> clone -> setup -> build -> enable_service & reboot"; \
+		echo "install & reboot -> clone -> setup -> build -> create -> enable_service & reboot"; \
 		exit 1; \
 	else \
 		exit 1; \
@@ -76,12 +76,12 @@ install: confirm
 	sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 	sudo usermod -aG docker $(USER)
 
-clone:
+clone: confirm
 	cd /home/$(USER) \
 	&& git clone https://github.com/recipelab/catkin_ws_actuator.git --recursive \
 	&& ln -s catkin_ws_actuator catkin_ws
 
-setup:
+setup: confirm
 	sudo apt update
 	sudo apt install -y build-essential
 	cd /home/$(USER)/catkin_ws/src/setting_public/docker \
@@ -96,7 +96,12 @@ build: confirm
 create: confirm
 	docker create --name ros1 --interactive --tty --network=host --privileged --volume=/dev:/dev $(CGROUPNS) --volume=/sys/fs/cgroup:/sys/fs/cgroup:rw recipelab/ros:noetic
 
-run: confirm
+enable_service: confirm
+	sudo ln -sf /home/$(USER)/catkin_ws/src/setting_public/docker/docker_ros1.service /etc/systemd/system
+	sudo systemctl enable docker_ros1
+	# sudo systemctl [enable|start|restart|stop|status|disable] docker_ros1
+
+run:
 	docker run --detach --name ros1 --interactive --tty --network=host --privileged --volume=/dev:/dev $(CGROUPNS) --volume=/sys/fs/cgroup:/sys/fs/cgroup:rw recipelab/ros:noetic
 
 exec:
@@ -113,8 +118,3 @@ rm:
 
 prune:
 	docker system prune -a
-
-enable_service:
-	sudo ln -sf /home/$(USER)/catkin_ws/src/setting_public/docker/docker_ros1.service /etc/systemd/system
-	sudo systemctl enable docker_ros1
-	# sudo systemctl [enable|start|restart|stop|status|disable] docker_ros1
