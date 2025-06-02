@@ -21,7 +21,7 @@ ifeq ($(CGROUP_VER), V1)
 	CGROUPCMD=
 else ifeq ($(CGROUP_VER), V2)
 	CGROUPNS=--cgroupns=host
-	CGROUPCMD=sudo cp /home/$(USER)/catkin_ws/src/setting_public/docker/daemon.json /etc/docker
+	CGROUPCMD=sudo cp /home/$(USER)/catkin_ws/src/setting/docker/daemon.json /etc/docker
 else
 	exit 1
 endif
@@ -58,7 +58,7 @@ install: confirm
 	&& echo "alias sb='source ~/.zshrc'" >> .zshrc \
 	&& echo "alias cw='cd ~/catkin_ws'" >> .zshrc \
 	&& echo "alias cs='cd ~/catkin_ws/src'" >> .zshrc \
-	&& echo "alias cssd='cd ~/catkin_ws/src/setting_public/docker'" >> .zshrc \
+	&& echo "alias cssd='cd ~/catkin_ws/src/setting/docker'" >> .zshrc \
 	&& sudo chsh -s `which zsh` $(USER)
 	# setup tmux
 	cd /home/$(USER) \
@@ -84,20 +84,20 @@ clone: confirm
 setup: confirm
 	sudo apt update
 	sudo apt install -y build-essential
-	cd /home/$(USER)/catkin_ws/src/setting_public/docker \
+	cd /home/$(USER)/catkin_ws/src/setting/docker \
 	&& curl -fsSL https://code-server.dev/install.sh | sh \
 	&& mkdir -p ~/.config/code-server && cp config.yaml ~/.config/code-server && sudo systemctl enable --now code-server@$(USER)
 
 build: confirm
 	$(CGROUPCMD)
-	cd /home/$(USER)/catkin_ws/src/setting_public/docker \
-	&& docker build -f /home/$(USER)/catkin_ws/src/setting_public/docker/Dockerfile -t recipelab/ros:noetic /home/$(USER) --progress=plain --no-cache --build-arg docker_from=$(DOCKER_FROM)
+	cd /home/$(USER)/catkin_ws/src/setting/docker \
+	&& docker build -f /home/$(USER)/catkin_ws/src/setting/docker/Dockerfile -t recipelab/ros:noetic /home/$(USER) --progress=plain --no-cache --build-arg docker_from=$(DOCKER_FROM)
 
 create: confirm
 	docker create --name ros1 --interactive --tty --network=host --privileged --volume=/dev:/dev $(CGROUPNS) --volume=/sys/fs/cgroup:/sys/fs/cgroup:rw recipelab/ros:noetic
 
 enable_service: confirm
-	sudo ln -sf /home/$(USER)/catkin_ws/src/setting_public/docker/docker_ros1.service /etc/systemd/system
+	sudo ln -sf /home/$(USER)/catkin_ws/src/setting/docker/docker_ros1.service /etc/systemd/system
 	sudo systemctl enable docker_ros1
 	# sudo systemctl [enable|start|restart|stop|status|disable] docker_ros1
 

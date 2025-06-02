@@ -79,14 +79,14 @@ RUN catkin config --extend /opt/ros/noetic
 RUN catkin build
 
 ## service 활성화
-WORKDIR /home/recipelab/catkin_ws/src/setting_public/docker
+WORKDIR /home/recipelab/catkin_ws/src/setting/docker
 RUN ./change_vncpasswd.sh
-RUN cd /home/recipelab/catkin_ws/src/setting_public/novnc_public && make jinja2
+RUN cd /home/recipelab/catkin_ws/src/setting/novncd && make jinja2
 
 USER root
 ## systemd 설정
-WORKDIR /home/recipelab/catkin_ws/src/setting_public/docker
-RUN ln -s /home/recipelab/catkin_ws/src/setting_public/novnc_public/systemd/novncd@recipelab.service /lib/systemd/system
+WORKDIR /home/recipelab/catkin_ws/src/setting/docker
+RUN ln -s /home/recipelab/catkin_ws/src/setting/novncd/systemd/novncd@recipelab.service /lib/systemd/system
 # 기본 실행 타겟 변경
 RUN cp ros.target /lib/systemd/system
 WORKDIR /lib/systemd/system
