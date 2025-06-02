@@ -1,0 +1,4 @@
+bind-addr: 0.0.0.0:4000
+auth: password
+password: 1q2w3e
+cert: false

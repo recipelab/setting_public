@@ -1,0 +1,12 @@
+[Unit]
+Description=docker ros1
+Wants=docker.service
+After-docker.service
+
+[Service]
+RemainAfterExit=yes
+ExecStart=/usr/bin/docker start ros1
+ExecStop=/usr/bin/docker stop ros1
+
+[Install]
+WantedBy=multi-user.target

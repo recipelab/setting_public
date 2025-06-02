@@ -1,0 +1,77 @@
+0. 준비
+  가. 테스트 OS
+    1) Ubuntu 20.04.6 LTS
+  나. docker 설치 참고
+    1) https://docs.docker.com/engine/install/ubuntu/
+      가) $ sudo usermod -aG docker ${USER}
+    2) https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-22-04
+    3) https://with-rl.tistory.com/entry/Ubuntu%EC%97%90%EC%84%9C-Docker%EB%A5%BC-%EC%9D%B4%EC%9A%A9%ED%95%9C-ROS1-ROS2-%EC%84%A4%EC%B9%98
+
+1. Dockerfile을 생성하기 위해 시험한 결과
+  가. 일반 사용자를 생성(컨테이너 생성)
+    1) $ docker run -it osrf/ros:noetic-desktop-full
+      가) # adduser recipelab
+        (1) 사용자계정암호 1q2w3e
+      나) # passwd
+        (1) 루트계정암호 1q2w3e
+      다) # exit
+  나. 새로운 이미지를 생성(사용자계정을 추가함)
+    1) docker commit <CONTAINER ID> <IMAGE>
+      가) docker ps -a로 확인
+      나) <CONTAINER ID>는 사용자계정을 추가한 이미지의 CONTAINER ID
+      다) <IMAGE>는 임의대로 생성 ex) osrf/ros:noetic-desktop-full-recipelab
+
+  다. 새로운 이미지를 사용할 것이므로 기존 컨테이너 삭제
+    1) docker stop <NAMES>
+      가) docker ps -a로 확인
+      나) 가. 에서 컨테이너 생성과 attach된 상태에서 exit를 할 경우 필요하지 않을 수 있음
+        (1) 이미 exit된 상태임
+    2) docker rm <NAMES>
+      가) docker ps -a로 확인
+
+  라. 새로운 이미지로 컨테이너 생성
+    1) $ docker run \
+        --name ros1 \
+        -it \
+        --user recipelab \
+        --network=host \
+        --privileged \
+        --volume=/dev:/dev \
+        --volume=/home/recipelab/catkin_ws:/home/recipelab/catkin_ws \
+        --workdir=/home/recipelab \
+        osrf/ros:noetic-desktop-full-recipelab
+      가) $ su -
+        (1) root계정으로 변경
+      나) # apt update
+      다) # apt install zsh git curl vim tmux
+      라) # vi /etc/group
+        (1) sudo, dialout, video에 recipelab 추가
+      마) # exit
+        (1) root계정 해제
+      바) $ exit
+        (1) sudo 그룹 적용하기 위함
+
+  마. 컨테이너에서 설정
+    1) $ docker start ros1
+    2) $ docker exec -it ros1 /bin/bash
+      가) $ curl -L https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh | sh
+      나) $ vi .zshrc
+        (1) ZSH_THEME="robbyrussell" -> ZSH_THEME="agnoster" 변경
+        (2) zstyle ':omz:update' mode auto 활성화
+      다) $ chsh -s `which zsh`
+      라) $ vi .tmux.conf
+        (1) set -g mouse on
+      마) $ sudo apt install python3-catkin-tools
+      바) $ sudo apt install python-is-python3
+      사) $ exit
+
+  바. zsh에서 catkin_ws 빌드
+    1) $ docker exec -it ros1 /bin/zsh
+      가) $ cd catkin_ws
+      나) $ rosdep update
+      다) $ source /opt/ros/noetic/setup.zsh
+      라) $ rosdep install --from-paths src --ignore-src -r -y
+      마) $ catkin build
+      바) $ source devel/setup.zsh
+      사) $ export USER=recipelab
+      아) $ roslaunch recipelab sim_pallete.launch

@@ -1,0 +1,91 @@
+0. 준비
+  가. 테스트 OS
+    1) Ubuntu 20.04.6 LTS
+    2) amd64 기준
+  나. docker 설치 참고
+    1) https://docs.docker.com/engine/install/ubuntu/
+      가) 설치
+        # Add Docker's official GPG key:
+        sudo apt-get update
+        sudo apt-get install ca-certificates curl
+        sudo install -m 0755 -d /etc/apt/keyrings
+        sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+        sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+        # Add the repository to Apt sources:
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+          $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        sudo apt-get update
+        sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        sudo usermod -aG docker ${USER}
+      나) 삭제
+        docker rm -f $(docker ps -qa)
+        sudo apt-get purge docker-ce docker-ce-cli containerd.io
+        sudo apt-get purge -y docker-engine docker docker.io docker-ce docker-ce-cli
+        sudo apt-get autoremove -y --purge docker-engine docker docker.io docker-ce
+        sudo groupdel docker
+        sudo rm -rf /var/lib/docker
+        sudo rm -rf /var/run/docker.sock
+        sudo rm -rf ~/.docker
+        sudo rm -rf /etc/docker
+        sudo rm -rf /usr/local/bin/docker-compose
+        sudo rm -rf /var/lib/docker /etc/docker
+    2) https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-22-04
+    3) https://with-rl.tistory.com/entry/Ubuntu%EC%97%90%EC%84%9C-Docker%EB%A5%BC-%EC%9D%B4%EC%9A%A9%ED%95%9C-ROS1-ROS2-%EC%84%A4%EC%B9%98
+  다. 삭제 명령
+    1) $ docker info|grep -i root
+      가) docker 디렉토리 확인
+      나) 캐시된(?) 이미지가 존재함
+    2) $ docker [container|image|volume|network] prune
+      가) 사용하지 않는 [container|image|volume|network] 삭제
+    3) $ docker system prune -a
+      가) 위의 명령어를 모두 한번에 실행
+
+1. Dockerfile 생성
+  가. Dockerfile 참고
+
+2. docker 이미지 생성
+  가. $ docker build -f /home/recipelab/catkin_ws/src/setting/docker/Dockerfile -t osrf/ros:noetic-desktop-full-recipelab /home/recipelab
+    1) Dockerfile이 존재하는 곳에서 실행해야함
+    2) $ docker build -f /home/recipelab/catkin_ws/src/setting/docker/Dockerfile -t osrf/ros:noetic-desktop-full-recipelab /home/recipelab --progress=plain --no-cache
+      가) 진행을 확인할 경우
+      나) 반복적으로 테스트를 하면서 dockerfile을 작성할 경우 --no-cache 제외하고 실행하면 빨라짐
+    3) arm64
+      가) docker build -f /home/recipelab/catkin_ws/src/setting/docker/Dockerfile -t arm64v8/ros:noetic-recipelab /home/recipelab --progress=plain --no-cache
+
+3. docker 컨테이너 생성 및 실행
+  가. $ docker run \
+        --name ros1 \
+        --interactive \
+        --tty \
+        --detach \
+        --network=host \
+        --privileged \
+        --volume=/dev:/dev \
+        --volume=/sys/fs/cgroup:/sys/fs/cgroup \
+        osrf/ros:noetic-desktop-full-recipelab
+    0) COPY catkin_ws를 사용하므로 --volume catkin_ws 제외
+      --volume=/home/recipelab/catkin_ws:/home/recipelab/catkin_ws \
+    1) detach 되면서 실행됨
+    2) attach 할 경우 
+        --detach \
+        삭제
+    3) arm64
+      $ docker run \
+        --name ros1 \
+        --interactive \
+        --tty \
+        --detach \
+        --network=host \
+        --privileged \
+        --volume=/dev:/dev \
+        --volume=/sys/fs/cgroup:/sys/fs/cgroup \
+        arm64v8/ros:noetic-recipelab
+
+4. docker 컨테이너 접속
+  가. $ docker exec -it -u recipelab ros1 /bin/zsh
+  나. 실행
+    1) $ cs
+    2) $ roslaunch recipelab sim_pallete.launch

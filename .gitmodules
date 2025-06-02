@@ -1,0 +1,3 @@
+[submodule "novnc_public"]
+	path = novnc_public
+	url = https://github.com/recipelab/novnc_public.git

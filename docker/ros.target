@@ -1,0 +1,5 @@
+[Unit]
+Description=ros
+Requires=ros.target novncd@recipelab.service faduinod.service recipelabd.service
+After=ros.target novncd@recipelab.service faduinod.service recipelabd.service
+AllowIsolate=yes

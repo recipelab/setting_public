@@ -1,0 +1,11 @@
+usb-serial/venv
+usb-serial/cp210x-program-1.0/cp210x/*.pyc
+can/EciLinux_amd64
+can/EciLinux_arm64
+can/SocketCAN - Linux (V1.1.148.0)
+can/socketcan-linux
+usb-serial/cp210x/pyusb/venv
+usb-serial/cp210x/Linux_3.x.x_4.x.x_VCP_Driver_Source/cp210x.ko
+usb-serial/cp210x/Linux_3.x.x_4.x.x_VCP_Driver_Source/cp210x_gpio_example
+99-ethercat.rules.autogen
+99-ethercat.rules.bak
