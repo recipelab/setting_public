@@ -79,7 +79,7 @@ install: confirm
 clone:
 	cd /home/$(USER) \
 	&& git clone https://github.com/recipelab/catkin_ws_actuator.git --recursive \
-	&& ln -s catkin_ws_pallete_rev1 catkin_ws
+	&& ln -s catkin_ws_actuator catkin_ws
 
 setup:
 	sudo apt update

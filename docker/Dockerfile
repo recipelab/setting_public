@@ -23,6 +23,11 @@ RUN echo recipelab:1q2w3e | /usr/sbin/chpasswd
 RUN sed -i -e "s#%sudo	ALL=(ALL:ALL) ALL#%sudo	ALL=(ALL:ALL) NOPASSWD:ALL#" /etc/sudoers
 
 ## recipelab catkin_ws를 위한 apt 패키지 설치
+RUN rm -rf /etc/apt/sources.list.d/ros1*.list
+RUN apt update
+RUN apt install -y curl
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros1.list > /dev/null
 RUN apt update
 # systemd를 사용하기 위함
 RUN apt install -y init systemd
@@ -68,7 +73,7 @@ RUN chown -R recipelab:recipelab catkin_ws
 USER recipelab
 # catkin_ws 종속성 패키지 설치
 WORKDIR /home/recipelab/catkin_ws
-RUN rosdep update && rosdep install --from-paths src --ignore-src -r -y
+RUN rosdep update --include-eol-distros && rosdep install --from-paths src --ignore-src -r -y
 ## catkin_ws build
 RUN catkin config --extend /opt/ros/noetic
 RUN catkin build
