@@ -36,6 +36,7 @@ RUN apt install -y zsh git curl vim tmux htop
 RUN apt install -y python3-catkin-tools python-is-python3
 RUN apt install -y python3-jinja2
 RUN apt install -y xfce4 xfce4-goodies
+RUN apt install -y firefox
 RUN apt install -y tigervnc-standalone-server
 RUN apt install -y socat
 # interactive한 명령을 noninteractive하게 변경하기 위함
