@@ -1,7 +1,7 @@
 USER=recipelab
 DISTRO=ubuntu
 ARCH=amd64
-CGROUP_VER=V1
+CGROUP_VER=v1
 ifeq ($(DISTRO), ubuntu)
 	DISTRO_CODENAME=$${UBUNTU_CODENAME:-$$VERSION_CODENAME}
 else ifeq ($(DISTRO), debian)
@@ -11,15 +11,15 @@ else
 endif
 ifeq ($(ARCH), amd64)
 	DOCKER_FROM=osrf/ros:noetic-desktop-full
-else ifeq ($(ARCH), arm64)
+else ifeq ($(ARCH), rpi5)
 	DOCKER_FROM=arm64v8/ros:noetic
 else
 	exit 1
 endif
-ifeq ($(CGROUP_VER), V1)
+ifeq ($(CGROUP_VER), v1)
 	CGROUPNS=
 	CGROUPCMD=
-else ifeq ($(CGROUP_VER), V2)
+else ifeq ($(CGROUP_VER), v2)
 	CGROUPNS=--cgroupns=host
 	CGROUPCMD=sudo cp /home/$(USER)/catkin_ws/src/setting/docker/daemon.json /etc/docker
 else
@@ -28,11 +28,12 @@ endif
 
 PROGRESS_MESSAGE=install & reboot -> clone -> setup -> build -> create -> enable_service & reboot
 confirm:
-	@echo "USER=$(USER), DISTRO=$(DISTRO), ARCH=$(ARCH), CGROUP_VER=$(CGROUP_VER)"
+	@echo "USER=$(USER) DISTRO=$(DISTRO) ARCH=$(ARCH) CGROUP_VER=$(CGROUP_VER)"
 	@read -p "Is Right?(yes/no/?): " INPUT; \
 	if [ "$$INPUT" = "yes" ] || [ "$$INPUT" = "y" ]; then \
 		:; \
 	elif [ "$$INPUT" = "?" ]; then \
+		echo "DISTRO=[ubuntu|debian] ARCH=[amd64|rpi5] CGROUP_VER=[v1|v2]"; \
 		echo "# progress: $(PROGRESS_MESSAGE)"; \
 		exit 1; \
 	else \
