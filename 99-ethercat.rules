@@ -1,4 +1,6 @@
 # usb 2.0 이더넷칩 r8152
-SUBSYSTEM=="net", ACTION=="add", SUBSYSTEMS=="usb", DRIVERS=="r8152", KERNEL=="eth*", NAME="ecat"
+SUBSYSTEM=="net", ACTION=="add", SUBSYSTEMS=="usb", DRIVERS=="r8152*", KERNEL=="eth*", NAME="ecat0"
+# usb 3.0 이더넷칩 r8153
+SUBSYSTEM=="net", ACTION=="add", SUBSYSTEMS=="usb", DRIVERS=="r8153*", KERNEL=="eth*", NAME="ecat0"
 # usb 3.0 이더넷칩 ax88179
-SUBSYSTEM=="net", ACTION=="add", SUBSYSTEMS=="usb", DRIVERS=="ax88179*", KERNEL=="eth*", NAME="ecat"
+SUBSYSTEM=="net", ACTION=="add", SUBSYSTEMS=="usb", DRIVERS=="ax88179*", KERNEL=="eth*", NAME="ecat0"

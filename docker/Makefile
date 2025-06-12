@@ -87,6 +87,9 @@ clone: confirm
 setup: confirm
 	sudo apt update
 	sudo apt install -y build-essential
+	sudo rm -rf /etc/udev/rules.d/99-ethercat.rules
+	sudo ln -s /home/$(USER)/catkin_ws/src/setting/99-ethercat.rules /etc/udev/rules.d/99-ethercat.rules
+	sudo udevadm control --reload-rules && sudo udevadm trigger
 	cd /home/$(USER)/catkin_ws/src/setting/docker \
 	&& curl -fsSL https://code-server.dev/install.sh | sh \
 	&& mkdir -p ~/.config/code-server && cp config.yaml ~/.config/code-server && sudo systemctl enable --now code-server@$(USER)
