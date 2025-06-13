@@ -108,6 +108,11 @@ create: confirm
 	@echo "# progress: $(PROGRESS_MESSAGE)"
 
 enable_service: confirm
+	@if [ "$$ARCH" = "rpi5" ]; then \
+		../jinja2-cli/jinja2 docker_ros1.service.tmpl -D exec_start_pre="/bin/sh -c 'nohup /home/$(USER)/catkin_ws/src/setting/docker/fix-dm.sh > /dev/null 2>&1 &'" -o docker_ros1.service; \
+	else \
+		../jinja2-cli/jinja2 docker_ros1.service.tmpl -o docker_ros1.service; \
+	fi
 	sudo ln -sf /home/$(USER)/catkin_ws/src/setting/docker/docker_ros1.service /etc/systemd/system
 	sudo systemctl enable docker_ros1
 	# sudo systemctl [enable|start|restart|stop|status|disable] docker_ros1

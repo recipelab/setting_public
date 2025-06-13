@@ -5,7 +5,7 @@ After=docker.service
 
 [Service]
 RemainAfterExit=yes
-ExecStartPre=/bin/sh -c 'nohup /home/recipelab/catkin_ws/src/setting/docker/fix-dm.sh > /dev/null 2>&1 &'
+ExecStartPre={{ exec_start_pre }}
 ExecStart=/usr/bin/docker start ros1
 ExecStop=/usr/bin/docker stop ros1
 
