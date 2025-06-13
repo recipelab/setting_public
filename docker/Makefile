@@ -34,6 +34,7 @@ confirm:
 		:; \
 	elif [ "$$INPUT" = "?" ]; then \
 		echo "DISTRO=[ubuntu|debian] ARCH=[amd64|rpi5] CGROUP_VER=[v1|v2]"; \
+		echo "DISTRO=[lsb_release -a] ARCH=[uname -a] CGROUP_VER=[grep cgroup /proc/filesystems]"; \
 		echo "# progress: $(PROGRESS_MESSAGE)"; \
 		exit 1; \
 	else \
