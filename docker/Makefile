@@ -87,11 +87,14 @@ clone: confirm
 	@echo "# progress: $(PROGRESS_MESSAGE)"
 
 setup: confirm
-	sudo apt update
-	sudo apt install -y build-essential
+	@if [ "$$ARCH" = "rpi5" ]; then \
+		{ grep -q "net.ifnames=0" /boot/firmware/cmdline.txt && echo "already [net.ifnames=0]"; } || { sudo sed -i '$$ s/$$/ net.ifnames=0/' /boot/firmware/cmdline.txt && echo "success [net.ifnames=0]" || echo "fail [net.ifnames=0]"; } \
+	fi
 	sudo rm -rf /etc/udev/rules.d/99-ethercat.rules
 	sudo ln -s /home/$(USER)/catkin_ws/src/setting/99-ethercat.rules /etc/udev/rules.d/99-ethercat.rules
 	sudo udevadm control --reload-rules && sudo udevadm trigger
+	sudo apt update
+	sudo apt install -y build-essential
 	cd /home/$(USER)/catkin_ws/src/setting/docker \
 	&& curl -fsSL https://code-server.dev/install.sh | sh \
 	&& mkdir -p ~/.config/code-server && cp config.yaml ~/.config/code-server && sudo systemctl enable --now code-server@$(USER)
