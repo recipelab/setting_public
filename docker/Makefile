@@ -1,7 +1,16 @@
-USER=recipelab
-DISTRO=ubuntu
-ARCH=amd64
-CGROUP_VER=v1
+ifndef ACCOUNT
+	ACCOUNT=recipelab
+endif
+ifndef DISTRO
+	DISTRO=ubuntu
+endif
+ifndef MACHINE
+	MACHINE=amd64
+endif
+ifndef CGROUP_VER
+	CGROUP_VER=v1
+endif
+
 ifeq ($(DISTRO), ubuntu)
 	DISTRO_CODENAME=$${UBUNTU_CODENAME:-$$VERSION_CODENAME}
 else ifeq ($(DISTRO), debian)
@@ -9,9 +18,9 @@ else ifeq ($(DISTRO), debian)
 else
 	exit 1
 endif
-ifeq ($(ARCH), amd64)
+ifeq ($(MACHINE), amd64)
 	DOCKER_FROM=osrf/ros:noetic-desktop-full
-else ifeq ($(ARCH), rpi5)
+else ifeq ($(MACHINE), rpi5)
 	DOCKER_FROM=arm64v8/ros:noetic
 else
 	exit 1
@@ -21,20 +30,20 @@ ifeq ($(CGROUP_VER), v1)
 	CGROUPCMD=
 else ifeq ($(CGROUP_VER), v2)
 	CGROUPNS=--cgroupns=host
-	CGROUPCMD=sudo cp /home/$(USER)/catkin_ws/src/setting/docker/daemon.json /etc/docker
+	CGROUPCMD=sudo cp /home/$(ACCOUNT)/catkin_ws/src/setting/docker/daemon.json /etc/docker
 else
 	exit 1
 endif
 
 PROGRESS_MESSAGE=install & reboot -> clone -> setup -> build -> create -> enable_service & reboot
 confirm:
-	@echo "USER=$(USER) DISTRO=$(DISTRO) ARCH=$(ARCH) CGROUP_VER=$(CGROUP_VER)"
+	@echo "ACCOUNT=$(ACCOUNT) DISTRO=$(DISTRO) MACHINE=$(MACHINE) CGROUP_VER=$(CGROUP_VER)"
 	@read -p "Is Right?(yes/no/?): " INPUT; \
 	if [ "$$INPUT" = "yes" ] || [ "$$INPUT" = "y" ]; then \
 		:; \
 	elif [ "$$INPUT" = "?" ]; then \
-		echo "DISTRO=[ubuntu|debian] ARCH=[amd64|rpi5] CGROUP_VER=[v1|v2]"; \
-		echo "DISTRO=[lsb_release -a] ARCH=[uname -a] CGROUP_VER=[grep cgroup /proc/filesystems]"; \
+		echo "DISTRO=[ubuntu|debian] MACHINE=[amd64|rpi5] CGROUP_VER=[v1|v2]"; \
+		echo "DISTRO=[lsb_release -a] MACHINE=[uname -a] CGROUP_VER=[grep cgroup /proc/filesystems]"; \
 		echo "# progress: $(PROGRESS_MESSAGE)"; \
 		exit 1; \
 	else \
@@ -49,12 +58,13 @@ install: confirm
 	sudo apt update
 	sudo apt install -y curl vim ssh htop
 	sudo apt install -y zsh tmux git
+	sudo apt install -y build-essential
 	# setup zsh
 	sudo apt install -y fonts-powerline
-	@if [ -d "/home/$(USER)/.oh-my-zsh" ]; then \
-		rm -rf /home/$(USER)/.oh-my-zsh; \
+	@if [ -d "/home/$(ACCOUNT)/.oh-my-zsh" ]; then \
+		rm -rf /home/$(ACCOUNT)/.oh-my-zsh; \
 	fi
-	cd /home/$(USER) \
+	cd /home/$(ACCOUNT) \
 	&& sh -c "$$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
 	&& sed -i -e "s#ZSH_THEME=\"robbyrussell\"#ZSH_THEME=\"agnoster\"#" .zshrc \
 	&& sed -i -e "s#\# zstyle ':omz:update' mode auto#zstyle ':omz:update' mode auto#" .zshrc \
@@ -62,9 +72,13 @@ install: confirm
 	&& echo "alias cw='cd ~/catkin_ws'" >> .zshrc \
 	&& echo "alias cs='cd ~/catkin_ws/src'" >> .zshrc \
 	&& echo "alias cssd='cd ~/catkin_ws/src/setting/docker'" >> .zshrc \
-	&& sudo chsh -s `which zsh` $(USER)
+	&& echo "export ACCOUNT=$(ACCOUNT)" >> .zshrc \
+	&& echo "export DISTRO=$(DISTRO)" >> .zshrc \
+	&& echo "export MACHINE=$(MACHINE)" >> .zshrc \
+	&& echo "export CGROUP_VER=$(CGROUP_VER)" >> .zshrc \
+	&& sudo chsh -s `which zsh` $(ACCOUNT)
 	# setup tmux
-	cd /home/$(USER) \
+	cd /home/$(ACCOUNT) \
 	&& echo "set -g mouse on\nunbind t\nbind-key -T prefix t split-window -v \; split-window -h 'htop' \; select-pane -t 0 \; split-window -h \; select-pane -t 0 \;" > .tmux.conf
 	# setup docker
 	sudo apt install -y ca-certificates curl
@@ -77,33 +91,31 @@ install: confirm
 	sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 	sudo apt update
 	sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-	sudo usermod -aG docker $(USER)
+	sudo usermod -aG docker $(ACCOUNT)
 	@echo "# progress: $(PROGRESS_MESSAGE)"
 
 clone: confirm
-	cd /home/$(USER) \
+	cd /home/$(ACCOUNT) \
 	&& git clone https://github.com/recipelab/catkin_ws_actuator.git --recursive \
 	&& ln -s catkin_ws_actuator catkin_ws
 	@echo "# progress: $(PROGRESS_MESSAGE)"
 
 setup: confirm
-	@if [ "$$ARCH" = "rpi5" ]; then \
+	@if [ "$$MACHINE" = "rpi5" ]; then \
 		{ grep -q "net.ifnames=0" /boot/firmware/cmdline.txt && echo "already [net.ifnames=0]"; } || { sudo sed -i '$$ s/$$/ net.ifnames=0/' /boot/firmware/cmdline.txt && echo "success [net.ifnames=0]" || echo "fail [net.ifnames=0]"; } \
 	fi
 	sudo rm -rf /etc/udev/rules.d/99-ethercat.rules
-	sudo ln -s /home/$(USER)/catkin_ws/src/setting/99-ethercat.rules /etc/udev/rules.d/99-ethercat.rules
+	sudo ln -s /home/$(ACCOUNT)/catkin_ws/src/setting/99-ethercat.rules /etc/udev/rules.d/99-ethercat.rules
 	sudo udevadm control --reload-rules && sudo udevadm trigger
-	sudo apt update
-	sudo apt install -y build-essential
-	cd /home/$(USER)/catkin_ws/src/setting/docker \
+	cd /home/$(ACCOUNT)/catkin_ws/src/setting/docker \
 	&& curl -fsSL https://code-server.dev/install.sh | sh \
-	&& mkdir -p ~/.config/code-server && cp config.yaml ~/.config/code-server && sudo systemctl enable --now code-server@$(USER)
+	&& mkdir -p ~/.config/code-server && cp config.yaml ~/.config/code-server && sudo systemctl enable --now code-server@$(ACCOUNT)
 	@echo "# progress: $(PROGRESS_MESSAGE)"
 
 build: confirm
 	$(CGROUPCMD)
-	cd /home/$(USER)/catkin_ws/src/setting/docker \
-	&& docker build -f /home/$(USER)/catkin_ws/src/setting/docker/Dockerfile -t recipelab/ros:noetic /home/$(USER) --progress=plain --no-cache --build-arg docker_from=$(DOCKER_FROM)
+	cd /home/$(ACCOUNT)/catkin_ws/src/setting/docker \
+	&& docker build -f /home/$(ACCOUNT)/catkin_ws/src/setting/docker/Dockerfile -t recipelab/ros:noetic /home/$(ACCOUNT) --progress=plain --no-cache --build-arg docker_from=$(DOCKER_FROM)
 	@echo "# progress: $(PROGRESS_MESSAGE)"
 
 create: confirm
@@ -111,12 +123,12 @@ create: confirm
 	@echo "# progress: $(PROGRESS_MESSAGE)"
 
 enable_service: confirm
-	@if [ "$$ARCH" = "rpi5" ]; then \
-		../jinja2-cli/jinja2 docker_ros1.service.tmpl -D exec_start_pre="/bin/sh -c 'nohup /home/$(USER)/catkin_ws/src/setting/docker/fix-dm.sh > /dev/null 2>&1 &'" -o docker_ros1.service; \
+	@if [ "$$MACHINE" = "rpi5" ]; then \
+		../jinja2-cli/jinja2 docker_ros1.service.tmpl -D exec_start_pre="/bin/sh -c 'nohup /home/$(ACCOUNT)/catkin_ws/src/setting/docker/fix-dm.sh > /dev/null 2>&1 &'" -o docker_ros1.service; \
 	else \
 		../jinja2-cli/jinja2 docker_ros1.service.tmpl -o docker_ros1.service; \
 	fi
-	sudo ln -sf /home/$(USER)/catkin_ws/src/setting/docker/docker_ros1.service /etc/systemd/system
+	sudo ln -sf /home/$(ACCOUNT)/catkin_ws/src/setting/docker/docker_ros1.service /etc/systemd/system
 	sudo systemctl enable docker_ros1
 	# sudo systemctl [enable|start|restart|stop|status|disable] docker_ros1
 	@echo "# progress: $(PROGRESS_MESSAGE)"
@@ -125,7 +137,7 @@ run:
 	docker run --detach --name ros1 --interactive --tty --network=host --privileged --volume=/dev:/dev $(CGROUPNS) --volume=/sys/fs/cgroup:/sys/fs/cgroup:rw recipelab/ros:noetic
 
 exec:
-	docker exec -it -u $(USER) ros1 /bin/zsh
+	docker exec -it -u $(ACCOUNT) ros1 /bin/zsh
 
 start:
 	docker start ros1
