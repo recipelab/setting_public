@@ -11,6 +11,8 @@ ifndef CGROUP_VER
 	CGROUP_VER=v1
 endif
 
+SETTING_DIR=/home/$(ACCOUNT)/catkin_ws/src/setting
+
 ifeq ($(DISTRO), ubuntu)
 	DISTRO_CODENAME=$${UBUNTU_CODENAME:-$$VERSION_CODENAME}
 else ifeq ($(DISTRO), debian)
@@ -30,7 +32,7 @@ ifeq ($(CGROUP_VER), v1)
 	CGROUPCMD=
 else ifeq ($(CGROUP_VER), v2)
 	CGROUPNS=--cgroupns=host
-	CGROUPCMD=sudo cp /home/$(ACCOUNT)/catkin_ws/src/setting/docker/daemon.json /etc/docker
+	CGROUPCMD=sudo cp $(SETTING_DIR)/docker/daemon.json /etc/docker
 else
 	exit 1
 endif
@@ -94,41 +96,41 @@ install: confirm
 	sudo usermod -aG docker $(ACCOUNT)
 	@echo "# progress: $(PROGRESS_MESSAGE)"
 
-clone: confirm
+clone:
 	cd /home/$(ACCOUNT) \
 	&& git clone https://github.com/recipelab/catkin_ws_actuator.git --recursive \
 	&& ln -s catkin_ws_actuator catkin_ws
 	@echo "# progress: $(PROGRESS_MESSAGE)"
 
-setup: confirm
+setup:
 	@if [ "$$MACHINE" = "rpi5" ]; then \
 		{ grep -q "net.ifnames=0" /boot/firmware/cmdline.txt && echo "already [net.ifnames=0]"; } || { sudo sed -i '$$ s/$$/ net.ifnames=0/' /boot/firmware/cmdline.txt && echo "success [net.ifnames=0]" || echo "fail [net.ifnames=0]"; } \
 	fi
 	sudo rm -rf /etc/udev/rules.d/99-ethercat.rules
-	sudo ln -s /home/$(ACCOUNT)/catkin_ws/src/setting/99-ethercat.rules /etc/udev/rules.d/99-ethercat.rules
+	sudo ln -s $(SETTING_DIR)/99-ethercat.rules /etc/udev/rules.d/99-ethercat.rules
 	sudo udevadm control --reload-rules && sudo udevadm trigger
-	cd /home/$(ACCOUNT)/catkin_ws/src/setting/docker \
+	cd $(SETTING_DIR)/docker \
 	&& curl -fsSL https://code-server.dev/install.sh | sh \
 	&& mkdir -p ~/.config/code-server && cp config.yaml ~/.config/code-server && sudo systemctl enable --now code-server@$(ACCOUNT)
 	@echo "# progress: $(PROGRESS_MESSAGE)"
 
-build: confirm
+build:
 	$(CGROUPCMD)
-	cd /home/$(ACCOUNT)/catkin_ws/src/setting/docker \
-	&& docker build -f /home/$(ACCOUNT)/catkin_ws/src/setting/docker/Dockerfile -t recipelab/ros:noetic /home/$(ACCOUNT) --progress=plain --no-cache --build-arg docker_from=$(DOCKER_FROM)
+	cd $(SETTING_DIR)/docker \
+	&& docker build -f $(SETTING_DIR)/docker/Dockerfile -t recipelab/ros:noetic /home/$(ACCOUNT) --progress=plain --no-cache --build-arg docker_from=$(DOCKER_FROM)
 	@echo "# progress: $(PROGRESS_MESSAGE)"
 
-create: confirm
+create:
 	docker create --name ros1 --interactive --tty --network=host --privileged --volume=/dev:/dev $(CGROUPNS) --volume=/sys/fs/cgroup:/sys/fs/cgroup:rw recipelab/ros:noetic
 	@echo "# progress: $(PROGRESS_MESSAGE)"
 
-enable_service: confirm
+enable_service:
 	@if [ "$$MACHINE" = "rpi5" ]; then \
-		../jinja2-cli/jinja2 docker_ros1.service.tmpl -D exec_start_pre="/bin/sh -c 'nohup /home/$(ACCOUNT)/catkin_ws/src/setting/docker/fix-dm.sh > /dev/null 2>&1 &'" -o docker_ros1.service; \
+		$(SETTING_DIR)/jinja2-cli/jinja2 docker_ros1.service.tmpl -D exec_start_pre="/bin/sh -c 'nohup $(SETTING_DIR)/docker/fix-dm.sh > /dev/null 2>&1 &'" -o docker_ros1.service; \
 	else \
-		../jinja2-cli/jinja2 docker_ros1.service.tmpl -o docker_ros1.service; \
+		$(SETTING_DIR)/jinja2-cli/jinja2 docker_ros1.service.tmpl -o docker_ros1.service; \
 	fi
-	sudo ln -sf /home/$(ACCOUNT)/catkin_ws/src/setting/docker/docker_ros1.service /etc/systemd/system
+	sudo ln -sf $(SETTING_DIR)/docker/docker_ros1.service /etc/systemd/system
 	sudo systemctl enable docker_ros1
 	# sudo systemctl [enable|start|restart|stop|status|disable] docker_ros1
 	@echo "# progress: $(PROGRESS_MESSAGE)"
