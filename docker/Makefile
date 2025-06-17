@@ -126,9 +126,9 @@ create:
 
 enable_service:
 	@if [ "$$MACHINE" = "rpi5" ]; then \
-		$(SETTING_DIR)/jinja2-cli/jinja2 docker_ros1.service.tmpl -D exec_start_pre="/bin/sh -c 'nohup $(SETTING_DIR)/docker/fix-dm.sh > /dev/null 2>&1 &'" -o docker_ros1.service; \
+		$(SETTING_DIR)/jinja2-cli/jinja2 $(SETTING_DIR)/docker/docker_ros1.service.tmpl -D exec_start_pre="/bin/sh -c 'nohup $(SETTING_DIR)/docker/fix-dm.sh > /dev/null 2>&1 &'" -o $(SETTING_DIR)/docker/docker_ros1.service; \
 	else \
-		$(SETTING_DIR)/jinja2-cli/jinja2 docker_ros1.service.tmpl -o docker_ros1.service; \
+		$(SETTING_DIR)/jinja2-cli/jinja2 $(SETTING_DIR)/docker/docker_ros1.service.tmpl -o $(SETTING_DIR)/docker/docker_ros1.service; \
 	fi
 	sudo ln -sf $(SETTING_DIR)/docker/docker_ros1.service /etc/systemd/system
 	sudo systemctl enable docker_ros1
