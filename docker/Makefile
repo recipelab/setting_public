@@ -104,7 +104,8 @@ clone:
 
 setup:
 	@if [ "$$MACHINE" = "rpi5" ]; then \
-		{ grep -q "net.ifnames=0" /boot/firmware/cmdline.txt && echo "already [net.ifnames=0]"; } || { sudo sed -i '$$ s/$$/ net.ifnames=0/' /boot/firmware/cmdline.txt && echo "success [net.ifnames=0]" || echo "fail [net.ifnames=0]"; } \
+		sudo cp /boot/firmware/cmdline.txt /boot/firmware/cmdline.txt.org \
+		&& { grep -q "net.ifnames=0" /boot/firmware/cmdline.txt && echo "already [net.ifnames=0]"; } || { sudo sed -i -E 's/\r//g; $$ s/$$/ net.ifnames=0\r/' /boot/firmware/cmdline.txt && echo "success [net.ifnames=0]" || echo "fail [net.ifnames=0]"; } \
 	fi
 	sudo rm -rf /etc/udev/rules.d/99-ethercat.rules
 	sudo ln -s $(SETTING_DIR)/99-ethercat.rules /etc/udev/rules.d/99-ethercat.rules
